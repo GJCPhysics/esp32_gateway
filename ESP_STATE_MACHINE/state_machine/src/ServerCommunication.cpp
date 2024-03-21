@@ -33,7 +33,8 @@
 
 namespace ServerCommunication
 {
-    const char* serverAddress = "192.168.43.172"; 
+    const char* serverName = "http://ec2-3-110-166-12.ap-south-1.compute.amazonaws.com:5000/send_commands"; 
+
     const int serverPort = 5000; 
 
     WiFiClient wifiClient;
@@ -41,8 +42,8 @@ namespace ServerCommunication
 
     void Server::initWiFi() 
     {
-        const char *ssid = "realme 5i";
-        const char *password = "s.n.s.03";
+        const char *ssid = "Oppo A3s";
+        const char *password = "12345678";
         Serial.print("Connecting to WiFi");
         WiFi.begin(ssid, password);
 
@@ -57,7 +58,7 @@ namespace ServerCommunication
     }
     void Server::sendDataToServer(uint8_t DoorSensorValue, uint8_t SmokeSensorValue) 
     {
-        if (wifiClient.connect(serverAddress, serverPort)) 
+        if (wifiClient.connect(serverName, serverPort)) 
         {
             DynamicJsonDocument jsonDoc(256);
             jsonDoc["DoorSensorValue"] = DoorSensorValue;
@@ -67,7 +68,7 @@ namespace ServerCommunication
             
             wifiClient.print("POST /update_sensor_status HTTP/1.1\r\n");
             wifiClient.print("Host: ");
-            wifiClient.print(serverAddress);
+            wifiClient.print(serverName);
             wifiClient.print("\r\n");
             wifiClient.print("Content-Type: application/json\r\n");
             wifiClient.print("Content-Length: ");
@@ -84,10 +85,10 @@ namespace ServerCommunication
 
     void Server::notifyIntrusionAlarm() 
     {
-        if (wifiClient.connect(serverAddress, serverPort)) 
+        if (wifiClient.connect(serverName, serverPort)) 
         {
             wifiClient.println("POST /notify/intrusion_alarm HTTP/1.1");
-            wifiClient.println("Host: " + String(serverAddress));
+            wifiClient.println("Host: " + String(serverName));
             wifiClient.println("Connection: close");
             wifiClient.println();
             wifiClient.stop();
@@ -100,10 +101,10 @@ namespace ServerCommunication
 
     void Server::notifySmokeSensorAlarm() 
     {
-        if (wifiClient.connect(serverAddress, serverPort)) 
+        if (wifiClient.connect(serverName, serverPort)) 
         {
             wifiClient.println("POST /notify/smoke_sensor_alarm HTTP/1.1");
-            wifiClient.println("Host: " + String(serverAddress));
+            wifiClient.println("Host: " + String(serverName));
             wifiClient.println("Connection: close");
             wifiClient.println();
             wifiClient.stop();
@@ -119,7 +120,7 @@ namespace ServerCommunication
         if (WiFi.status() == WL_CONNECTED) 
         {
             HTTPClient http;
-            http.begin(wifiClient, "http://" + String(serverAddress) + ":" + String(serverPort) + "/send_commands");
+            http.begin(wifiClient, "http://" + String(serverName) + ":" + String(serverPort) + "/send_commands");
             int httpResponseCode = http.GET();
             
             if (httpResponseCode > 0) 
