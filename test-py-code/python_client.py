@@ -19,7 +19,7 @@ class Alarm(threading.Thread):
 
 def arm_system():
     try:
-        response = requests.post('http://192.168.43.172:5000/receive_command', json={"command": "arm"})
+        response = requests.post('http://ec2-3-110-166-12.ap-south-1.compute.amazonaws.com:5000//receive_command', json={"command": "arm"})
         if response.status_code == 200:
             print("Command sent to arm system successfully!")
         else:
@@ -29,7 +29,7 @@ def arm_system():
 
 def disarm_system():
     try:
-        response = requests.post('http://192.168.43.172:5000/receive_command', json={"command": "disarm"})
+        response = requests.post('http://ec2-3-110-166-12.ap-south-1.compute.amazonaws.com:5000//receive_command', json={"command": "disarm"})
         if response.status_code == 200:
             print("Command sent to disarm system successfully!")
         else:
@@ -39,7 +39,7 @@ def disarm_system():
 
 def get_sensor_status():
     try:
-        response = requests.get('http://192.168.43.172:5000/send_status')
+        response = requests.get('http://ec2-3-110-166-12.ap-south-1.compute.amazonaws.com:5000//send_status')
         if response.status_code == 200:
             data = response.json()
             print("Door Sensor Status:", data['door_sensor_status'])
@@ -51,7 +51,7 @@ def get_sensor_status():
 
 def get_intrusion_alarm_status():
     try:
-        response = requests.get('http://192.168.43.172:5000/send_intrusion_alarm')
+        response = requests.get('http://ec2-3-110-166-12.ap-south-1.compute.amazonaws.com:5000/send_intrusion_alarm')
         if response.status_code == 200:
             data = response.json()
             if data.get('intrusion_alarm_triggered'):
@@ -63,7 +63,7 @@ def get_intrusion_alarm_status():
 
 def get_smoke_alarm_status():
     try:
-        response = requests.get('http://192.168.43.172:5000/send_smoke_alarm')
+        response = requests.get('http://ec2-3-110-166-12.ap-south-1.compute.amazonaws.com:5000/send_smoke_alarm')
         if response.status_code == 200:
             data = response.json()
             if data.get('smoke_alarm_triggered'):
