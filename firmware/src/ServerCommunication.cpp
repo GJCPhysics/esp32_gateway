@@ -33,16 +33,16 @@
 
 namespace ServerCommunication
 {
-    const char* serverAddress = "192.168.43.172"; 
-    const int serverPort = 5000; 
+    const char* serverAddress = "ec2-3-110-166-12.ap-south-1.compute.amazonaws.com"; 
+    const int serverPort = 5000;
 
     WiFiClient wifiClient;
     Server::Server() {}
 
     void Server::initWiFi() 
     {
-        const char *ssid = "realme 5i";
-        const char *password = "s.n.s.03";
+        const char *ssid = "Oppo A3s";
+        const char *password = "12345678";
         Serial.print("Connecting to WiFi");
         WiFi.begin(ssid, password);
 
