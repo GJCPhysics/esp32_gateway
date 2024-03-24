@@ -74,8 +74,8 @@ def get_smoke_alarm_status():
         print("Error:", e)
 
 def main():
-    alarm_trigger = Alarm()
-    alarm_trigger.start()
+    alarm_listener = Alarm()
+    alarm_listener.start()
 
     while True:
         print("1. Arm system")
@@ -92,12 +92,12 @@ def main():
         elif choice == '3':
             get_sensor_status()
         elif choice == '4':
-            alarm_trigger.stop()
+            alarm_listener.stop()
             break
         else:
             print("Invalid choice. Please try again.")
 
-    alarm_trigger.join()
+    alarm_listener.join()
 
 if __name__ == "__main__":
     main()
