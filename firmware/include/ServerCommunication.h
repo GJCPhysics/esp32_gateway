@@ -44,6 +44,11 @@ namespace ServerCommunication
         void notifyIntrusionAlarm();
         void notifySmokeSensorAlarm();
         void receiveCommands();
+        void setup();
+        void setupWiFiAP();
+        void saveWiFiCredentials(String ssid, String password);
+        void connectToWiFi(String ssid, String password);
+        void setupRoutes();
     private:
         String receivedCommand;
     };
