@@ -43,6 +43,7 @@ void setup()
     Serial.begin(9600);
     nanoCommunication.setup();
     serverCommunication.initWiFi();
+    serverCommunication.setup();
 }
 
 void loop()

@@ -30,6 +30,9 @@
 #include "IntrusionAlarm.h"
 #include <HTTPClient.h>
 #include<ArduinoJson.h>
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 
 namespace ServerCommunication
 {
@@ -37,24 +40,84 @@ namespace ServerCommunication
     const int serverPort = 5000;
 
     WiFiClient wifiClient;
+    AsyncWebServer server(80);
+
+    const char* hotspotSSID = "ESP32_Hotspot";
+    const char* hotspotPassword = "password123";
+
     Server::Server() {}
 
-    void Server::initWiFi() 
+    void Server::setupWiFiAP() 
     {
-        const char *ssid = "Oppo A3s";
-        const char *password = "12345678";
-        Serial.print("Connecting to WiFi");
-        WiFi.begin(ssid, password);
+        if (!WiFi.softAP(hotspotSSID, hotspotPassword)) 
+        {
+            Serial.println("Failed to set up WiFi AP");
+        }
+    }
 
-        while (WiFi.status() != WL_CONNECTED)
+    void Server::saveWiFiCredentials(String ssid, String password) 
+    {
+    }
+
+    void Server::connectToWiFi(String ssid, String password) 
+    {
+        Serial.println("Connecting to WiFi...");
+        WiFi.begin(ssid.c_str(), password.c_str());
+        int attempts = 0;
+        while (WiFi.status() != WL_CONNECTED) 
         {
             delay(1000);
             Serial.print(".");
+            attempts++;
+            if (attempts > 10) 
+            {
+                Serial.println("Failed to connect to WiFi");
+                return;
+            }
         }
-        Serial.println("\nWiFi connected!");
-        Serial.print("IP Address: ");
-        Serial.println(WiFi.localIP());
+        Serial.println("\nConnected to WiFi!");
+        saveWiFiCredentials(ssid, password);
     }
+
+    void Server::setupRoutes() 
+    {
+        server.on("/", HTTP_GET, [this](AsyncWebServerRequest *request)
+        {
+            request->send(200, "text/html", "<form method='post' action='/save'><input type='text' name='ssid' placeholder='WiFi SSID'><br><input type='password' name='password' placeholder='WiFi Password'><br><input type='submit' value='Save'></form>");
+        });
+
+        server.on("/save", HTTP_POST, [this](AsyncWebServerRequest *request)
+        {
+            String ssid = request->arg("ssid");
+            String password = request->arg("password");
+            if (ssid.length() == 0 || password.length() == 0) {
+                request->send(400, "text/plain", "SSID or password cannot be empty");
+                return;
+            }
+            connectToWiFi(ssid, password);
+            request->send(200, "text/plain", "WiFi credentials saved!");
+        });
+    }
+
+    void Server::initWiFi() 
+    {
+        Serial.print("Setting up WiFi...");
+        setupWiFiAP();
+        Serial.println("Done");
+    }
+
+    void Server::setup() 
+    {
+        Serial.begin(9600);
+        if (!WiFi.mode(WIFI_AP)) 
+        {
+            Serial.println("Failed to set WiFi mode to AP");
+        }
+        setupWiFiAP();
+        setupRoutes();
+        server.begin();
+    }
+
     void Server::sendDataToServer(uint8_t DoorSensorValue, uint8_t SmokeSensorValue) 
     {
         if (wifiClient.connect(serverAddress, serverPort)) 
@@ -160,6 +223,3 @@ namespace ServerCommunication
         }
     }
 }
-
-
-
