@@ -33,10 +33,23 @@
 #include "IntrusionAlarm.h"
 #include "SmokeSensorAlarm.h"
 
+#define BUZZER_PIN 2
+
 NanoCommunication::Nano nanoCommunication;
 ServerCommunication::Server serverCommunication;
 IntrusionAlarm intrusionAlarm;
 SmokeSensorAlarm smokeSensorAlarm;
+
+bool isBuzzerOn = false;
+
+void activateBuzzer(unsigned long duration) 
+{
+    isBuzzerOn = true;
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(duration);
+    digitalWrite(BUZZER_PIN, LOW);
+    isBuzzerOn = false;
+}
 
 void setup() 
 {
@@ -44,6 +57,8 @@ void setup()
     nanoCommunication.setup();
     serverCommunication.initWiFi();
     serverCommunication.setup();
+    pinMode(BUZZER_PIN, OUTPUT);
+    digitalWrite(BUZZER_PIN, LOW);
 }
 
 void loop()
@@ -57,24 +72,32 @@ void loop()
     if (DoorSensorValue == 1 || DoorSensorValue == 3) 
     {
         Serial.println("Door opened");
-        intrusionAlarm.doorOpened();
-        intrusionAlarm.timeout();
-        
+        if (intrusionAlarm.getState() == IntrusionAlarm::Armed)
+        {
+            activateBuzzer(30000); 
+        }
     } 
     else 
     {
-        intrusionAlarm.doorClosed();
+        Serial.println("Door closed");
+        if (intrusionAlarm.getState() == IntrusionAlarm::Disarmed)
+        {
+            isBuzzerOn = false;
+            digitalWrite(BUZZER_PIN, LOW); 
+        }
     }
-    if (SmokeSensorValue == 2 || SmokeSensorValue == 3)
+
+    if (SmokeSensorValue == 2 || SmokeSensorValue == 3) 
     {
-        smokeSensorAlarm.smokeDetected();
-    } else 
+        Serial.println("Smoke detected");
+        activateBuzzer(30000); 
+    }
+    else 
     {
         smokeSensorAlarm.smokeNotDetected();
     }
 
-    if (intrusionAlarm.getState() == IntrusionAlarm::WaitingForAlarmSituation ||
-        smokeSensorAlarm.getState() == SmokeSensorAlarm::AlarmTriggered ||
+    if (smokeSensorAlarm.getState() == SmokeSensorAlarm::AlarmTriggered ||
         intrusionAlarm.getState() == IntrusionAlarm::AlarmTriggered ||
         smokeSensorAlarm.getState() == SmokeSensorAlarm::SmokeDetected) 
     {    
