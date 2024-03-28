@@ -44,6 +44,9 @@ namespace ServerCommunication
 
     const char* hotspotSSID = "ESP32_Hotspot";
     const char* hotspotPassword = "password123";
+    
+    const int ssidAddr = 0;
+    const int passwordAddr = 64;
 
     Server::Server() {}
 
@@ -57,6 +60,18 @@ namespace ServerCommunication
 
     void Server::saveWiFiCredentials(String ssid, String password) 
     {
+	for (int i = 0; i < ssid.length(); ++i) 
+	{
+            EEPROM.write(ssidAddr + i, ssid[i]);
+        }
+        EEPROM.write(ssidAddr + ssid.length(), '\0'); 
+        for (int i = 0; i < password.length(); ++i) 
+        {
+            EEPROM.write(passwordAddr + i, password[i]);
+        }
+        EEPROM.write(passwordAddr + password.length(), '\0'); 
+
+        EEPROM.commit(); 
     }
 
     void Server::connectToWiFi(String ssid, String password) 
