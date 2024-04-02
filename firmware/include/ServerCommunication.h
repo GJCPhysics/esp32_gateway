@@ -31,11 +31,14 @@
 
 #include <Arduino.h>
 #include "IntrusionAlarm.h"
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <WiFi.h>
 
 namespace ServerCommunication
  {
     class Server
-     {
+    {
     public:
         Server();
         static void receiveCommands(IntrusionAlarm& intrusionAlarm);
@@ -44,6 +47,13 @@ namespace ServerCommunication
         void notifyIntrusionAlarm();
         void notifySmokeSensorAlarm();
         void receiveCommands();
+        void setup();
+        void setupWiFiAP();
+        void saveWiFiCredentials(String ssid, String password);
+        void connectToWiFi(String ssid, String password);
+        void setupRoutes();
+        void readWiFiCredentials(String &ssid, String &password);
+        void connectToSavedWiFi();
     private:
         String receivedCommand;
     };
