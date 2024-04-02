@@ -33,6 +33,7 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <Preferences.h>
 
 namespace ServerCommunication
 {
@@ -40,13 +41,14 @@ namespace ServerCommunication
     const int serverPort = 5000;
 
     WiFiClient wifiClient;
+    Preferences preferences;
     AsyncWebServer server(80);
 
     const char* hotspotSSID = "ESP32_Hotspot";
     const char* hotspotPassword = "password123";
     
-    const int ssidAddr = 0;
-    const int passwordAddr = 64;
+    const char* ssidKey = "ssid";
+    const char* passwordKey = "password";
 
     Server::Server() {}
 
@@ -58,33 +60,17 @@ namespace ServerCommunication
         }
     }
 
-    void Server::saveWiFiCredentials(String ssid, String password) 
-    {
-	for (int i = 0; i < ssid.length(); ++i) 
-	{
-            EEPROM.write(ssidAddr + i, ssid[i]);
-        }
-        EEPROM.write(ssidAddr + ssid.length(), '\0'); 
-        for (int i = 0; i < password.length(); ++i) 
-        {
-            EEPROM.write(passwordAddr + i, password[i]);
-        }
-        EEPROM.write(passwordAddr + password.length(), '\0'); 
-
-        EEPROM.commit(); 
-    }
-
-    void Server::connectToWiFi(String ssid, String password) 
+    void Server::connectToWiFi(String ssid, String password)
     {
         Serial.println("Connecting to WiFi...");
         WiFi.begin(ssid.c_str(), password.c_str());
         int attempts = 0;
-        while (WiFi.status() != WL_CONNECTED) 
+        while (WiFi.status() != WL_CONNECTED)
         {
             delay(1000);
             Serial.print(".");
             attempts++;
-            if (attempts > 10) 
+            if (attempts > 10)
             {
                 Serial.println("Failed to connect to WiFi");
                 return;
@@ -92,6 +78,50 @@ namespace ServerCommunication
         }
         Serial.println("\nConnected to WiFi!");
         saveWiFiCredentials(ssid, password);
+    }
+    
+    void Server::saveWiFiCredentials(String ssid, String password) 
+    {
+        preferences.begin("wifiCreds");
+        preferences.putString(ssidKey, ssid);
+        preferences.putString(passwordKey, password);
+        preferences.end();
+    }
+
+    void Server::readWiFiCredentials(String &ssid, String &password)
+    {
+        preferences.begin("wifiCreds");
+        ssid = preferences.getString(ssidKey, "");
+        password = preferences.getString(passwordKey, "");
+        preferences.end();
+    }
+
+    void Server::connectToSavedWiFi()
+    {
+        String ssid, password;
+        readWiFiCredentials(ssid, password);
+        if (ssid.length() > 0 && password.length() > 0)
+        {
+            WiFi.begin(ssid.c_str(), password.c_str());
+            int attempts = 0;
+            while (WiFi.status() != WL_CONNECTED && attempts < 10)
+            {
+                delay(1000);
+                attempts++;
+            }
+            if (WiFi.status() == WL_CONNECTED)
+            {
+                Serial.println("Connected to saved WiFi");
+            }
+            else
+            {
+                Serial.println("Failed to connect to saved WiFi");
+            }
+        }
+        else
+        {
+            Serial.println("No saved WiFi credentials found");
+        }
     }
 
     void Server::setupRoutes() 
@@ -105,7 +135,8 @@ namespace ServerCommunication
         {
             String ssid = request->arg("ssid");
             String password = request->arg("password");
-            if (ssid.length() == 0 || password.length() == 0) {
+            if (ssid.length() == 0 || password.length() == 0) 
+            {
                 request->send(400, "text/plain", "SSID or password cannot be empty");
                 return;
             }
@@ -121,14 +152,15 @@ namespace ServerCommunication
         Serial.println("Done");
     }
 
-    void Server::setup() 
+    void Server::setup()
     {
         Serial.begin(9600);
-        if (!WiFi.mode(WIFI_AP)) 
+        if (!WiFi.mode(WIFI_AP_STA))
         {
-            Serial.println("Failed to set WiFi mode to AP");
+            Serial.println("Failed to set WiFi mode to AP+STA");
         }
         setupWiFiAP();
+        connectToSavedWiFi();
         setupRoutes();
         server.begin();
     }
@@ -218,7 +250,8 @@ namespace ServerCommunication
                         {                   
                             intrusionAlarm.serverArm();
                             Serial.println(intrusionAlarm.getState());
-                        } else if (command == "disarm") 
+                        } 
+                        else if (command == "disarm") 
                         {                
                             intrusionAlarm.disarmSystem();
                         }
